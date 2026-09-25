@@ -1,0 +1,11 @@
+age,height,weight,sleep_hours,exercise_days,junk_food,sugar_intake,screen_time,cardiac_risk,obesity_risk,cancer_risk
+25,1.70,85,5,1,3,3,8,High,High,Medium
+30,1.75,78,6,2,2,2,7,Medium,Medium,Low
+35,1.72,90,5,1,3,3,8,High,High,Medium
+40,1.68,95,4,0,3,3,9,High,High,High
+28,1.70,65,8,5,0,1,4,Low,Low,Low
+45,1.65,88,6,2,2,2,6,High,Medium,Medium
+50,1.70,92,5,1,3,3,7,High,High,High
+32,1.75,70,7,4,1,1,5,Low,Low,Low
+38,1.68,80,6,3,2,2,6,Medium,Medium,Medium
+55,1.65,85,5,1,3,3,8,High,High,High

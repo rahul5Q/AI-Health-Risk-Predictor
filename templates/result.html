@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analysis Result - Health Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script>
+        if(localStorage.getItem('sirona_theme') === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+        }
+    </script>
+</head>
+<body>
+
+<!-- Custom Cursor Elements -->
+<div class="custom-cursor-dot"></div>
+<div class="custom-cursor-ring"></div>
+
+<!-- Theme Toggle Button -->
+<button class="theme-toggle" id="themeToggle" aria-label="Toggle Theme">
+    <i data-feather="sun" id="themeIcon"></i>
+</button>
+
+<!-- Animated Mesh Background -->
+<div class="mesh-bg">
+    <div class="mesh-orb orb-1"></div>
+    <div class="mesh-orb orb-2"></div>
+    <div class="mesh-orb orb-3"></div>
+</div>
+
+<div class="container">
+    <header>
+        <h2>Health Analysis</h2>
+        <p class="tagline">Based on your provided metrics</p>
+    </header>
+
+    <!-- Circular Score Dashboard -->
+    <div class="score-dashboard">
+        <svg viewBox="0 0 36 36" class="circular-chart 
+            {% if score >= 80 %}score-excellent{% elif score >= 60 %}score-good{% elif score >= 40 %}score-average{% else %}score-poor{% endif %}">
+            <path class="circle-bg"
+                d="M18 2.0845
+                a 15.9155 15.9155 0 0 1 0 31.831
+                a 15.9155 15.9155 0 0 1 0 -31.831"
+            />
+            <path class="circle" id="animatedCircle"
+                stroke-dasharray="0, 100"
+                d="M18 2.0845
+                a 15.9155 15.9155 0 0 1 0 31.831
+                a 15.9155 15.9155 0 0 1 0 -31.831"
+            />
+            <text x="18" y="20.35" class="percentage" id="scoreText">0</text>
+            <text x="18" y="26" class="score-label">/100</text>
+        </svg>
+        <div class="score-subtitle" id="scoreSubtitle">Calculating...</div>
+    </div>
+
+    <!-- Results Grid -->
+    <div class="results-grid">
+        <div class="result-card">
+            <div class="result-info">
+                <i data-feather="heart" style="color: #ef4444;"></i>
+                <span class="result-name">Cardiac Risk</span>
+            </div>
+            <span class="risk-badge {{ cardiac | lower }}">{{ cardiac }}</span>
+        </div>
+        <div class="result-card">
+            <div class="result-info">
+                <i data-feather="plus-circle" style="color: #f59e0b;"></i>
+                <span class="result-name">Obesity Risk</span>
+            </div>
+            <span class="risk-badge {{ obesity | lower }}">{{ obesity }}</span>
+        </div>
+        <div class="result-card">
+            <div class="result-info">
+                <i data-feather="shield-off" style="color: #8b5cf6;"></i>
+                <span class="result-name">Cancer Risk</span>
+            </div>
+            <span class="risk-badge {{ cancer | lower }}">{{ cancer }}</span>
+        </div>
+    </div>
+
+    <a href="/" class="submit-btn">
+        <i data-feather="refresh-ccw"></i> Recalculate
+    </a>
+</div>
+
+<script>
+    feather.replace();
+
+    // -------------------------------------------------------------
+    // DAY / NIGHT THEME TOGGLE
+    // -------------------------------------------------------------
+    const toggleBtn = document.getElementById('themeToggle');
+    const updateIcon = () => {
+        const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+        toggleBtn.innerHTML = isLight ? '<i data-feather="moon"></i>' : '<i data-feather="sun"></i>';
+        feather.replace();
+    };
+    
+    updateIcon();
+
+    toggleBtn.addEventListener('click', () => {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        if (currentTheme === 'light') {
+            document.documentElement.removeAttribute('data-theme');
+            localStorage.setItem('sirona_theme', 'dark');
+        } else {
+            document.documentElement.setAttribute('data-theme', 'light');
+            localStorage.setItem('sirona_theme', 'light');
+        }
+        updateIcon();
+    });
+
+    // -------------------------------------------------------------
+    // ANIMATE THE SCORE
+    // -------------------------------------------------------------
+    const targetScore = {{ score }};
+    const circle = document.getElementById('animatedCircle');
+    const scoreText = document.getElementById('scoreText');
+    const subtitle = document.getElementById('scoreSubtitle');
+
+    setTimeout(() => {
+        circle.setAttribute('stroke-dasharray', `${targetScore}, 100`);
+        let current = 0;
+        const duration = 1500;
+        const intervalTime = 20;
+        const steps = duration / intervalTime;
+        const increment = targetScore / steps;
+
+        const counter = setInterval(() => {
+            current += increment;
+            if(current >= targetScore) {
+                current = targetScore;
+                clearInterval(counter);
+                if(targetScore >= 80) subtitle.textContent = "Excellent Lifestyle";
+                else if(targetScore >= 60) subtitle.textContent = "Good - Minor changes needed";
+                else if(targetScore >= 40) subtitle.textContent = "Average - Room for improvement";
+                else subtitle.textContent = "High Risk - Consult physician";
+            }
+            scoreText.textContent = Math.round(current);
+        }, intervalTime);
+    }, 500);
+
+    // -------------------------------------------------------------
+    // CUSTOM CURSOR LOGIC
+    // -------------------------------------------------------------
+    const cursorDot = document.querySelector('.custom-cursor-dot');
+    const cursorRing = document.querySelector('.custom-cursor-ring');
+    let mouseX = 0; let mouseY = 0;
+    let ringX = 0; let ringY = 0;
+
+    if (window.matchMedia("(any-hover: hover)").matches) {
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX; mouseY = e.clientY;
+            cursorDot.style.transform = `translate(${mouseX}px, ${mouseY}px)`;
+        });
+        const renderRing = () => {
+            ringX += (mouseX - ringX) * 0.2;
+            ringY += (mouseY - ringY) * 0.2;
+            cursorRing.style.transform = `translate(${ringX}px, ${ringY}px)`;
+            requestAnimationFrame(renderRing);
+        };
+        requestAnimationFrame(renderRing);
+
+        const interactables = document.querySelectorAll('button, a, .theme-toggle');
+        interactables.forEach(el => {
+            el.addEventListener('mouseenter', () => document.body.classList.add('custom-cursor-hovering'));
+            el.addEventListener('mouseleave', () => document.body.classList.remove('custom-cursor-hovering'));
+        });
+    }
+</script>
+</body>
+</html>

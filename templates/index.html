@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sirona - Health Risk Predictor</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script>
+        // Init theme immediately to prevent flashing
+        if(localStorage.getItem('sirona_theme') === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+        }
+    </script>
+</head>
+<body>
+
+<!-- Custom Cursor Elements -->
+<div class="custom-cursor-dot"></div>
+<div class="custom-cursor-ring"></div>
+
+<!-- Theme Toggle Button -->
+<button class="theme-toggle" id="themeToggle" aria-label="Toggle Theme">
+    <i data-feather="sun" id="themeIcon"></i>
+</button>
+
+<!-- Animated Mesh Background -->
+<div class="mesh-bg">
+    <div class="mesh-orb orb-1"></div>
+    <div class="mesh-orb orb-2"></div>
+    <div class="mesh-orb orb-3"></div>
+</div>
+
+<div class="container">
+    <header>
+        <h2>Health Dashboard</h2>
+        <p class="tagline">AI-powered risk analysis based on your lifestyle.</p>
+    </header>
+
+    <form method="POST" action="/">
+        <!-- Personal Info -->
+        <div class="form-section blue-theme">
+            <div class="section-header">
+                <div class="section-icon"><i data-feather="user"></i></div>
+                <div class="section-title">Personal Metrics</div>
+            </div>
+            <div class="input-grid full-width">
+                <div class="input-group">
+                    <input type="number" id="age" name="age" min="1" placeholder="Age" required>
+                    <label for="age">Age</label>
+                </div>
+            </div>
+            <div class="input-grid" style="margin-top: 20px;">
+                <div class="input-group">
+                    <input type="number" id="height" name="height" step="0.01" placeholder="Height (m)" required>
+                    <label for="height">Height (m)</label>
+                </div>
+                <div class="input-group">
+                    <input type="number" id="weight" name="weight" step="0.1" placeholder="Weight (kg)" required>
+                    <label for="weight">Weight (kg)</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Daily Habits -->
+        <div class="form-section green-theme">
+            <div class="section-header">
+                <div class="section-icon"><i data-feather="activity"></i></div>
+                <div class="section-title">Lifestyle Habits</div>
+            </div>
+            <div class="input-grid">
+                <div class="input-group">
+                    <input type="number" id="sleep_hours" name="sleep_hours" step="0.5" placeholder="Sleep (hrs)" required>
+                    <label for="sleep_hours">Sleep (hrs/day)</label>
+                </div>
+                <div class="input-group">
+                    <input type="number" id="exercise_days" name="exercise_days" min="0" max="7" placeholder="Exercise (days)" required>
+                    <label for="exercise_days">Exercise (days/wk)</label>
+                </div>
+            </div>
+            <div class="input-grid full-width" style="margin-top: 20px;">
+                <div class="input-group">
+                    <input type="number" id="screen_time" name="screen_time" step="0.5" placeholder="Screen Time (hrs)" required>
+                    <label for="screen_time">Screen Time (hrs/day)</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Diet -->
+        <div class="form-section orange-theme">
+            <div class="section-header">
+                <div class="section-icon"><i data-feather="coffee"></i></div>
+                <div class="section-title">Diet & Nutrition</div>
+            </div>
+            <div class="input-grid">
+                <div class="input-group">
+                    <input type="number" id="junk_food" name="junk_food" min="0" max="3" placeholder="Junk Food (0-3)" required>
+                    <label for="junk_food">Junk Food (0-3)</label>
+                </div>
+                <div class="input-group">
+                    <input type="number" id="sugar_intake" name="sugar_intake" min="0" max="3" placeholder="Sugar Intake (0-3)" required>
+                    <label for="sugar_intake">Sugar Intake (0-3)</label>
+                </div>
+            </div>
+        </div>
+
+        <button type="submit" class="submit-btn" id="runAnalysisBtn">
+            Run Analysis <i data-feather="arrow-right"></i>
+        </button>
+    </form>
+    <p class="note">Encrypted & secure. For educational purposes only.</p>
+</div>
+
+<script>
+    feather.replace();
+
+    // -------------------------------------------------------------
+    // DAY / NIGHT THEME TOGGLE
+    // -------------------------------------------------------------
+    const toggleBtn = document.getElementById('themeToggle');
+    const updateIcon = () => {
+        const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+        toggleBtn.innerHTML = isLight ? '<i data-feather="moon"></i>' : '<i data-feather="sun"></i>';
+        feather.replace();
+    };
+    
+    // Initial icon render
+    updateIcon();
+
+    toggleBtn.addEventListener('click', () => {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        if (currentTheme === 'light') {
+            document.documentElement.removeAttribute('data-theme');
+            localStorage.setItem('sirona_theme', 'dark');
+        } else {
+            document.documentElement.setAttribute('data-theme', 'light');
+            localStorage.setItem('sirona_theme', 'light');
+        }
+        updateIcon();
+    });
+
+    // -------------------------------------------------------------
+    // CUSTOM CURSOR LOGIC
+    // -------------------------------------------------------------
+    const cursorDot = document.querySelector('.custom-cursor-dot');
+    const cursorRing = document.querySelector('.custom-cursor-ring');
+    
+    // Mouse coords
+    let mouseX = 0; let mouseY = 0;
+    // Ring trailing coords
+    let ringX = 0; let ringY = 0;
+
+    // Detect if device supports hover before turning on custom cursor
+    if (window.matchMedia("(any-hover: hover)").matches) {
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            
+            // Immediately move the dot
+            cursorDot.style.transform = `translate(${mouseX}px, ${mouseY}px)`;
+        });
+
+        // Animation loop for the trailing ring
+        const renderRing = () => {
+            // LERP for smooth trailing
+            ringX += (mouseX - ringX) * 0.2;
+            ringY += (mouseY - ringY) * 0.2;
+            cursorRing.style.transform = `translate(${ringX}px, ${ringY}px)`;
+            requestAnimationFrame(renderRing);
+        };
+        requestAnimationFrame(renderRing);
+
+        // Hover effect over interactive elements (buttons, links)
+        const interactables = document.querySelectorAll('button, a, .theme-toggle');
+        interactables.forEach(el => {
+            el.addEventListener('mouseenter', () => document.body.classList.add('custom-cursor-hovering'));
+            el.addEventListener('mouseleave', () => document.body.classList.remove('custom-cursor-hovering'));
+        });
+
+        // Focus effect for text inputs
+        const inputs = document.querySelectorAll('input');
+        inputs.forEach(input => {
+            input.addEventListener('mouseenter', () => document.body.classList.add('custom-cursor-input-focus'));
+            input.addEventListener('mouseleave', () => document.body.classList.remove('custom-cursor-input-focus'));
+        });
+    }
+</script>
+
+</body>
+</html>
