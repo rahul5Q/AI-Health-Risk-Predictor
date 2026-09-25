@@ -10,6 +10,16 @@ An AI-based web application that predicts health risks using machine learning mo
 - Web-based prediction interface
 - Machine learning-based predictions
 
+## Team Members & Contributions
+
+| Team Member | Contribution |
+|---|---|
+| Rahul Chatterjee | Project name selection, coding structure, model training and project integration |
+| Anirban Acharya | Project documentation and project report preparation |
+| Sarthak Roy Chowdhury | Dataset selection and dataset-related work |
+| Gatik Choubey | Speech preparation and project explanation/presentation |
+| Sohail Akhter | General project contribution and backup support |
+
 ## Technologies Used
 
 - Python
